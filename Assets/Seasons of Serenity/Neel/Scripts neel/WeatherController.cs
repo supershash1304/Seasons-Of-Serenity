@@ -9,7 +9,8 @@ public class WeatherController : MonoBehaviour
     public GameObject snowPrefab;
     public GameObject lavaPrefab;
 
-    public float weatherRadius = 500f;
+    public float weatherRadius = 500f; // optional
+    public float lavaScaleMultiplier = 2f; // optional scale control for lava
 
     private GameObject activeRain;
     private GameObject activeSnow;
@@ -17,18 +18,18 @@ public class WeatherController : MonoBehaviour
 
     public void CycleWeather(Vector3 playerPosition)
     {
-        // Cycle through weather types
         currentWeather = (WeatherType)(((int)currentWeather + 1) % System.Enum.GetValues(typeof(WeatherType)).Length);
         ApplyWeather(playerPosition);
     }
 
     public void ApplyWeather(Vector3 playerPosition)
     {
-        // Clear previous weather
-        if (activeRain != null) Destroy(activeRain);
-        if (activeSnow != null) Destroy(activeSnow);
-        if (activeLava != null) Destroy(activeLava);
+        // --- Destroy previous weather with 2s delay ---
+        if (activeRain != null) Destroy(activeRain, 2f);
+        if (activeSnow != null) Destroy(activeSnow, 2f);
+        if (activeLava != null) Destroy(activeLava, 2f);
 
+        // --- Spawn new weather ---
         switch (currentWeather)
         {
             case WeatherType.Sun:
@@ -55,7 +56,14 @@ public class WeatherController : MonoBehaviour
                 if (lavaPrefab != null)
                 {
                     activeLava = Instantiate(lavaPrefab, playerPosition, Quaternion.identity);
-                    activeLava.transform.localScale = new Vector3(weatherRadius * 2, 1f, weatherRadius * 2);
+
+                    // Keep prefab’s original scale, but apply multiplier
+                    Vector3 originalScale = lavaPrefab.transform.localScale;
+                    activeLava.transform.localScale = new Vector3(
+                        originalScale.x * lavaScaleMultiplier,
+                        originalScale.y,
+                        originalScale.z * lavaScaleMultiplier
+                    );
                 }
                 Debug.Log("Weather: Lava");
                 break;
