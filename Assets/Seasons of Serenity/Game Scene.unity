@@ -28274,9 +28274,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentWeather: 0
   rainPrefab: {fileID: 2707952879601834932, guid: 03afab48d3571df4d85198d598868eb4, type: 3}
-  snowPrefab: {fileID: 122790, guid: 950f8b7b75b0e45949ba0a337607535c, type: 3}
-  lavaPrefab: {fileID: 139076, guid: 68675b6de826c4b76bca37c1253d0c61, type: 3}
+  snowPrefab: {fileID: 139076, guid: 68675b6de826c4b76bca37c1253d0c61, type: 3}
+  lavaPrefab: {fileID: 122790, guid: 53b02f2ea7afdff4ba881387ff50ca6f, type: 3}
   weatherRadius: 500
+  lavaScaleMultiplier: 2
 --- !u!4 &1145148703
 Transform:
   m_ObjectHideFlags: 0
