@@ -80,7 +80,7 @@ Material:
     - _UseFog: 1
     - _ViewDistance: 10000
     - __dirty: 0
-    - _cloudsHeight: 300
+    - _cloudsHeight: 1
     - _cloudsPosition: 500
     m_Colors:
     - _CloudsColor: {r: 0.37732878, g: 0.6339269, b: 0.745283, a: 1}

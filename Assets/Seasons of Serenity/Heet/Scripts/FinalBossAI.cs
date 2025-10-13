@@ -1,7 +1,4 @@
-using System.Linq;
 using UnityEngine;
-
-usiusing UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,6 +12,10 @@ public class FinalBossAI : MonoBehaviour
     public float actionCooldown = 2f;
     private float actionTimer;
 
+    [Header("Player Detection")]
+    public Transform player;           // Assign in Inspector
+    public float detectionRange = 10f; // Attack range
+
     void Start()
     {
         GenerateMatrix();
@@ -24,11 +25,20 @@ public class FinalBossAI : MonoBehaviour
 
     void Update()
     {
-        actionTimer -= Time.deltaTime;
-        if (actionTimer <= 0f)
+        if (player == null) return;
+
+        // Check player distance
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+
+        // Only attack when player is within range
+        if (distanceToPlayer <= detectionRange)
         {
-            Traverse();
-            actionTimer = actionCooldown;
+            actionTimer -= Time.deltaTime;
+            if (actionTimer <= 0f)
+            {
+                Traverse();
+                actionTimer = actionCooldown;
+            }
         }
     }
 
@@ -78,19 +88,25 @@ public class FinalBossAI : MonoBehaviour
             if (choice <= cumulative)
             {
                 lastAction = kvp.Value;
-                kvp.Value.ExecuteAction();
+                kvp.Value.ExecuteAction(); // Trigger attack behavior here
                 currentNode = kvp.Value.TargetNode;
                 break;
             }
         }
     }
 
-    // Call this from external event (e.g., boss hits player)
+    // Call this externally when the boss attack hits or misses
     public void ApplyFeedback(bool successfulHit)
     {
         if (lastAction == null) return;
         float reward = successfulHit ? 0.5f : -0.3f;
         lastAction.AdjustWeight(reward);
     }
-}
 
+    // Optional: Draw attack range in editor
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
+    }
+}
