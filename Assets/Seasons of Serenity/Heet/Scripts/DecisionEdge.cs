@@ -13,25 +13,24 @@ public class DecisionEdge
         TargetNode = targetNode;
     }
 
+    public void AdjustWeight(float reward)
+    {
+        Weight += reward;
+        Weight = Mathf.Clamp(Weight, 0.1f, 10f);  // Keeps the weight usable
+    }
+
     public void ExecuteAction()
     {
-        Debug.Log("Final Boss performs: " + ActionName);
+        Debug.Log("Executing attack: " + ActionName);
 
-        // Find the boss GameObject (must be tagged "Boss")
         GameObject boss = GameObject.FindGameObjectWithTag("Boss");
         if (boss != null)
         {
             Animator animator = boss.GetComponent<Animator>();
             if (animator != null)
             {
-                animator.SetTrigger(ActionName); // Triggers animation
+                animator.SetTrigger(ActionName);
             }
         }
-    }
-
-    public void AdjustWeight(float reward)
-    {
-        Weight += reward;
-        Weight = Mathf.Clamp(Weight, 0.1f, 10f);
     }
 }
