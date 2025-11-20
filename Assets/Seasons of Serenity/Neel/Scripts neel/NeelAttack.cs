@@ -8,7 +8,7 @@ public class NeelAttack : MonoBehaviour
     public GameObject[] beamPrefabs; // Beam1 to Beam4
 
     public float attackDelay = 1f;        // Delay after animation trigger
-    public float attackRange = 5f;        // Raycast range
+    public float attackRange = 20f;        // Raycast range
     public int attackDamage = 25;         // Damage per beam (25 points)
 
     public LayerMask enemyLayer;          // Assign the monster's layer in Inspector
