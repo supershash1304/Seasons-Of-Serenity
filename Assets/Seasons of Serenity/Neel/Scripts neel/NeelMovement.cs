@@ -13,7 +13,7 @@ public class NeelMovement : MonoBehaviour
     public float runSpeed = 8f;
     public float gravity = -9.81f;
     public float jumpHeight = 1.5f;
-    public float rotationSpeed = 180f; // Degrees per second
+    public float rotationSpeed = 180f;
 
     private Vector3 velocity;
     private bool isGrounded;
@@ -22,28 +22,34 @@ public class NeelMovement : MonoBehaviour
 
     void Start()
     {
-        // Find the WeatherController in the scene
         weatherController = FindObjectOfType<WeatherController>();
-
         if (weatherController == null)
             Debug.LogWarning("WeatherController not found in the scene!");
+
+        if (controller == null) controller = GetComponent<CharacterController>();
+        if (animator == null) animator = GetComponentInChildren<Animator>();
     }
 
     void Update()
     {
         // ----- Ground Check -----
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-        if (isGrounded && velocity.y < 0)
+
+        // keep player stuck to ground
+        if (isGrounded && velocity.y < 0f)
             velocity.y = -2f;
 
         // ----- Input -----
         bool forwardPressed = Input.GetKey(KeyCode.W);
         bool shiftPressed = Input.GetKey(KeyCode.LeftShift);
-        bool jumpPressed = Input.GetButtonDown("Jump");
+        bool jumpPressed = Input.GetKeyDown(KeyCode.Space);
+
+
+        bool isRunning = forwardPressed && shiftPressed;
 
         // ----- Movement -----
         float moveForward = forwardPressed ? 1f : 0f;
-        float currentSpeed = (forwardPressed && shiftPressed) ? runSpeed : walkSpeed;
+        float currentSpeed = isRunning ? runSpeed : walkSpeed;
 
         Vector3 move = transform.forward * moveForward;
         controller.Move(move * currentSpeed * Time.deltaTime);
@@ -55,20 +61,28 @@ public class NeelMovement : MonoBehaviour
 
         transform.Rotate(Vector3.up, horizontalInput * rotationSpeed * Time.deltaTime);
 
-        // ----- Animation -----
-        animator.SetFloat("speed", moveForward);
-        animator.SetBool("isRunning", forwardPressed && shiftPressed);
-
         // ----- Jumping -----
         if (jumpPressed && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+            // Trigger jump animation (RunningJump will happen if isRunning==true)
             animator.SetTrigger("Jump");
         }
 
         // ----- Apply Gravity -----
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+
+        // ----- Animator Params (AFTER movement + gravity so values are current) -----
+        animator.SetFloat("speed", moveForward);
+        animator.SetBool("isRunning", isRunning);
+
+        // NEW: needed for RunningJump transitions/return
+        animator.SetBool("isGrounded", isGrounded);
+
+        // OPTIONAL: good for blending/landing logic if you use it in Animator
+        animator.SetFloat("yVelocity", velocity.y);
 
         // ----- Weather Control (Press Q) -----
         if (Input.GetKeyDown(KeyCode.Q) && weatherController != null)
@@ -77,3 +91,4 @@ public class NeelMovement : MonoBehaviour
         }
     }
 }
+    

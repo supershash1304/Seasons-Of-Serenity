@@ -4,7 +4,7 @@ using UnityEngine.AI;
 public class MonsterHealth : MonoBehaviour
 {
     public int maxHealth = 50;
-    private int currentHealth;
+    public int CurrentHealth { get; private set; }
 
     private MonsterAI ai;
     private Animator animator;
@@ -12,25 +12,33 @@ public class MonsterHealth : MonoBehaviour
 
     private bool isDead = false;
 
-    void Start()
+    private void Awake()
     {
-        currentHealth = maxHealth;
-
+        // Use Awake so references exist before other scripts hit us
         ai = GetComponent<MonsterAI>();
-        animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
+
+        // Animator is often on a child for rigged monsters
+        animator = GetComponent<Animator>();
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
+        CurrentHealth = maxHealth;
     }
 
     public void TakeDamage(int damageAmount)
     {
         if (isDead) return;
 
-        currentHealth -= damageAmount;
+        CurrentHealth -= damageAmount;
+        CurrentHealth = Mathf.Clamp(CurrentHealth, 0, maxHealth);
 
-        if (currentHealth > 0)
+        Debug.Log($"[MonsterHealth] {name} took {damageAmount} damage. HP: {CurrentHealth}/{maxHealth}");
+
+        if (CurrentHealth > 0)
         {
-            // Optional Hurt animation
-            animator.SetTrigger("Hit");
+            if (animator != null)
+                animator.SetTrigger("Hit");
         }
         else
         {
@@ -38,23 +46,20 @@ public class MonsterHealth : MonoBehaviour
         }
     }
 
-    void Die()
+    private void Die()
     {
         isDead = true;
 
-        // Play death animation
-        animator.SetTrigger("Die");
+        Debug.Log($"[MonsterHealth] {name} died.");
 
-        // Disable movement
+        if (animator != null)
+            animator.SetTrigger("Die");
+
         if (agent != null) agent.enabled = false;
         if (ai != null) ai.enabled = false;
 
-        // Destroy the monster after animation
         Destroy(gameObject, 4f);
     }
 
-    public bool IsDead()
-    {
-        return isDead;
-    }
+    public bool IsDead() => isDead;
 }

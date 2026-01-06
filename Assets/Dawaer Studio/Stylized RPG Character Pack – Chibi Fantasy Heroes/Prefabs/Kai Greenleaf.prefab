@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5219731999697312524}
   - component: {fileID: 6809662242132772620}
-  - component: {fileID: 3439590944632305085}
   - component: {fileID: 5985510945400483255}
   m_Layer: 8
   m_Name: MiniMapCamera
@@ -85,14 +84,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &3439590944632305085
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 247053829242457459}
-  m_Enabled: 1
 --- !u!114 &5985510945400483255
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2517,6 +2508,8 @@ GameObject:
   - component: {fileID: 7177265757349043790}
   - component: {fileID: 6204044972746979713}
   - component: {fileID: 8549995267675857105}
+  - component: {fileID: 968442011006865218}
+  - component: {fileID: 723460194622572325}
   m_Layer: 8
   m_Name: Kai Greenleaf
   m_TagString: Player
@@ -2638,11 +2631,48 @@ MonoBehaviour:
   - {fileID: 5933559473369272323, guid: a3f7f8c904613b446992ee553c720767, type: 3}
   - {fileID: 1045336025021301725, guid: 51b2271a05d1a794d87a473c1e65150e, type: 3}
   attackDelay: 1
+  soundDelay: 0.5
   attackRange: 20
   attackDamage: 25
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
+--- !u!136 &968442011006865218
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607807134322912681}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.8
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &723460194622572325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607807134322912681}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68f0f155915dbdc428a9ab0da504af7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 1000
 --- !u!1 &5880608306012225730
 GameObject:
   m_ObjectHideFlags: 0
@@ -4424,13 +4454,47 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 430495674, guid: bd6b16ebae3e748678b90a25cb354102, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 672752558859913032, guid: bd6b16ebae3e748678b90a25cb354102, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 506871586288037471}
   m_SourcePrefab: {fileID: 100100000, guid: bd6b16ebae3e748678b90a25cb354102, type: 3}
+--- !u!1 &811377258823028004 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 672752558859913032, guid: bd6b16ebae3e748678b90a25cb354102, type: 3}
+  m_PrefabInstance: {fileID: 149902682921798252}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &506871586288037471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 811377258823028004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b16c66d7b17bba4ca7423f42f21a2c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerHealth: {fileID: 723460194622572325}
+  progressBar: {fileID: 811377258823028008}
 --- !u!224 &811377258823028007 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 672752558859913035, guid: bd6b16ebae3e748678b90a25cb354102, type: 3}
   m_PrefabInstance: {fileID: 149902682921798252}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &811377258823028008 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 672752558859913028, guid: bd6b16ebae3e748678b90a25cb354102, type: 3}
+  m_PrefabInstance: {fileID: 149902682921798252}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 811377258823028004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fb5802e5d3c3472ca89151b0c6e3758, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
