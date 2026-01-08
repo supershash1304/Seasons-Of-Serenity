@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -41,9 +41,8 @@ public class WaterBossBT : MonoBehaviour
     [Header("Debug")]
     public bool debug = true;
 
-    // health (optional - you can wire from your MonsterHealth)
-    public int maxHealth = 200;
-    public int currentHealth;
+    // âœ… Boss health comes from EnemyHealth
+    private EnemyHealth health;
 
     private float nextAttackTime;
     private float nextSpellTime;
@@ -56,6 +55,10 @@ public class WaterBossBT : MonoBehaviour
 
     private void Awake()
     {
+        health = GetComponent<EnemyHealth>();
+        if (health == null)
+            Debug.LogWarning("[WaterBossBT] EnemyHealth missing on boss. Add EnemyHealth to Water Boss root.");
+
         if (agent == null) agent = GetComponent<NavMeshAgent>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
 
@@ -65,13 +68,13 @@ public class WaterBossBT : MonoBehaviour
             if (p != null) player = p.transform;
         }
 
-        currentHealth = maxHealth;
-
         BuildTree();
     }
 
     private void Update()
     {
+        if (health != null && health.IsDead()) return;
+
         if (root == null) return;
         root.Tick();
 
@@ -83,35 +86,27 @@ public class WaterBossBT : MonoBehaviour
         }
     }
 
-    // ---------------- Public damage API ----------------
-    public void TakeDamage(int amount)
+    // ---------------- Called by EnemyHealth via SendMessage ----------------
+    public void OnHit()
     {
-        if (currentHealth <= 0) return;
+        if (health != null && health.IsDead()) return;
 
-        currentHealth -= amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        if (animator != null && !string.IsNullOrEmpty(hitTrigger))
+            animator.SetTrigger(hitTrigger);
 
-        if (debug) Debug.Log($"[WaterBoss] Took {amount}. HP {currentHealth}/{maxHealth}");
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-        else
-        {
-            if (animator != null && !string.IsNullOrEmpty(hitTrigger))
-                animator.SetTrigger(hitTrigger);
-        }
+        if (debug) Debug.Log("[WaterBossBT] OnHit()");
     }
 
-    private void Die()
+    public void OnDeath()
     {
-        if (debug) Debug.Log("[WaterBoss] DEAD");
+        if (debug) Debug.Log("[WaterBossBT] OnDeath()");
+
         if (agent != null) agent.isStopped = true;
 
-        if (animator != null)
+        if (animator != null && !string.IsNullOrEmpty(deathTrigger))
             animator.SetTrigger(deathTrigger);
 
+        // Disable AI
         enabled = false;
     }
 
@@ -153,7 +148,10 @@ public class WaterBossBT : MonoBehaviour
     }
 
     // ---------------- Conditions ----------------
-    private bool IsDead() => currentHealth <= 0;
+    private bool IsDead()
+    {
+        return health != null && health.IsDead();
+    }
 
     private bool PlayerDetected()
     {
@@ -187,7 +185,6 @@ public class WaterBossBT : MonoBehaviour
     private NodeState ChasePlayer()
     {
         if (player == null || agent == null) return NodeState.Failure;
-
         if (!agent.isOnNavMesh) return NodeState.Failure;
 
         agent.isStopped = false;
@@ -207,15 +204,13 @@ public class WaterBossBT : MonoBehaviour
 
         nextAttackTime = Time.time + attackCooldown;
 
-        // Random L/R
         bool right = UnityEngine.Random.value > 0.5f;
         if (animator != null)
             animator.SetTrigger(right ? attackRTrigger : attackLTrigger);
 
-        // Apply damage by raycast immediately (or move to Animation Event for perfect timing)
         ApplyRaycastDamage(meleeDamage);
 
-        if (debug) Debug.Log($"[WaterBoss] MELEE {(right ? "R" : "L")}");
+        if (debug) Debug.Log($"[WaterBossBT] MELEE {(right ? "R" : "L")}");
 
         return NodeState.Success;
     }
@@ -231,10 +226,9 @@ public class WaterBossBT : MonoBehaviour
         if (animator != null)
             animator.SetTrigger(castTrigger);
 
-        // Simple “spell” damage. (Better: spawn projectile + hit later)
         ApplyRaycastDamage(spellDamage);
 
-        if (debug) Debug.Log("[WaterBoss] CAST SPELL");
+        if (debug) Debug.Log("[WaterBossBT] CAST SPELL");
 
         return NodeState.Success;
     }
@@ -244,13 +238,11 @@ public class WaterBossBT : MonoBehaviour
         if (agent == null) return NodeState.Failure;
         if (!agent.isOnNavMesh) return NodeState.Failure;
 
-        // If player detected, stop patrolling
         if (PlayerDetected()) return NodeState.Failure;
 
         agent.isStopped = false;
         agent.stoppingDistance = 0f;
 
-        // choose new patrol target if none / reached
         if (patrolTarget == Vector3.zero || Vector3.Distance(transform.position, patrolTarget) < 1f)
         {
             patrolWaitTimer += Time.deltaTime;
@@ -260,7 +252,7 @@ public class WaterBossBT : MonoBehaviour
                 patrolTarget = GetRandomNavPoint(transform.position, patrolRadius);
                 agent.SetDestination(patrolTarget);
 
-                if (debug) Debug.Log("[WaterBoss] Patrol -> " + patrolTarget);
+                if (debug) Debug.Log("[WaterBossBT] Patrol -> " + patrolTarget);
             }
             return NodeState.Running;
         }

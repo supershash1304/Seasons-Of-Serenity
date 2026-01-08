@@ -9,7 +9,7 @@ public class FinalBossController : MonoBehaviour
     public float attackRange = 3f;
 
     [Header("NavMesh Movement")]
-    public float repathRate = 0.1f; // how often to refresh destination
+    public float repathRate = 0.1f;
     private float repathTimer;
 
     [Header("Attack Cooldown")]
@@ -25,13 +25,10 @@ public class FinalBossController : MonoBehaviour
     [Header("Raycast")]
     public LayerMask playerLayer;
 
-    [Header("Health")]
-    public int bossHealth = 200;
-
     [Header("Animator Params")]
     public string speedParam = "Speed";
     public string attackTrigger = "Attack";
-    public string dieTrigger = "Die"; // change to "Death" if your boss animator uses Death
+    public string dieTrigger = "Die"; // change if your animator uses a different trigger
 
     [Header("Debug")]
     public bool debugLogs = true;
@@ -39,6 +36,10 @@ public class FinalBossController : MonoBehaviour
 
     private Animator animator;
     private NavMeshAgent agent;
+
+    // ✅ Use EnemyHealth as the ONLY health system
+    private EnemyHealth enemyHealth;
+    private bool deathHandled = false;
 
     // Matrix + RL
     private DecisionNode[,] matrix;
@@ -49,16 +50,10 @@ public class FinalBossController : MonoBehaviour
     private string lastAttackName = "";
     private float sameAttackAccumTime = 0f;
 
-    // --------------------
-    // Debug data accessors (for graph/matrix visualizer)
-    // --------------------
+    // Debug accessors (for visualizer)
     public string LastChosenAttackNameForDebug { get; private set; } = "none";
-
-    // ✅ NEW: previous vertex for matrix transition arrow
     public Vector2Int PreviousVertexForDebug { get; private set; } = new Vector2Int(-1, -1);
-
-    public Vector2Int CurrentVertexForDebug =>
-        currentNode != null ? currentNode.Position : new Vector2Int(-1, -1);
+    public Vector2Int CurrentVertexForDebug => currentNode != null ? currentNode.Position : new Vector2Int(-1, -1);
 
     public float[] GetCurrentNodeWeightsForDebug()
     {
@@ -76,6 +71,7 @@ public class FinalBossController : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
+        enemyHealth = GetComponent<EnemyHealth>();
 
         if (player == null)
         {
@@ -86,6 +82,7 @@ public class FinalBossController : MonoBehaviour
         if (player == null) LogError("Player not found. Tag player as 'Player'.");
         if (agent == null) LogError("NavMeshAgent missing.");
         if (animator == null) LogError("Animator missing.");
+        if (enemyHealth == null) LogError("EnemyHealth missing on boss! Add EnemyHealth component.");
 
         if (agent != null)
             agent.stoppingDistance = Mathf.Max(attackRange - 0.5f, 0.1f);
@@ -106,8 +103,6 @@ public class FinalBossController : MonoBehaviour
 
         InitializeMatrix();
         currentNode = matrix[0, 0];
-
-        // init prev = current so visualizer doesn't show (-1,-1) once fight starts
         PreviousVertexForDebug = currentNode.Position;
 
         Log($"Initialized matrix. Starting vertex = {currentNode.Position}");
@@ -115,16 +110,12 @@ public class FinalBossController : MonoBehaviour
 
     private void Update()
     {
-        if (player == null || agent == null || animator == null) return;
+        if (player == null || agent == null || animator == null || enemyHealth == null) return;
 
-        // Death
-        if (bossHealth <= 0)
+        // ✅ Death is driven by EnemyHealth
+        if (enemyHealth.IsDead())
         {
-            agent.isStopped = true;
-            animator.SetFloat(speedParam, 0f);
-            animator.SetTrigger(dieTrigger);
-            Log("Boss died -> Triggered Die");
-            enabled = false;
+            HandleDeathOnce();
             return;
         }
 
@@ -140,6 +131,29 @@ public class FinalBossController : MonoBehaviour
             StopAndAttack();
         else
             ChasePlayerContinuous();
+    }
+
+    private void HandleDeathOnce()
+    {
+        if (deathHandled) return;
+        deathHandled = true;
+
+        if (agent != null)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+        }
+
+        if (animator != null)
+        {
+            animator.SetFloat(speedParam, 0f);
+            animator.SetTrigger(dieTrigger);
+        }
+
+        Log("Boss died (EnemyHealth) -> stopping AI + triggering Die");
+
+        // Stop this controller so it won’t keep running
+        enabled = false;
     }
 
     private void ChasePlayerContinuous()
@@ -159,7 +173,7 @@ public class FinalBossController : MonoBehaviour
             repathTimer = repathRate;
             agent.SetDestination(player.position);
 
-            Log($"CHASE: bossPos={transform.position} playerPos={player.position} dist={Vector3.Distance(transform.position, player.position):0.00} " +
+            Log($"CHASE: dist={Vector3.Distance(transform.position, player.position):0.00} " +
                 $"hasPath={agent.hasPath} status={agent.pathStatus} vel={agent.velocity.magnitude:0.00}");
         }
     }
@@ -176,14 +190,11 @@ public class FinalBossController : MonoBehaviour
         if (Time.time < nextAttackTime) return;
         nextAttackTime = Time.time + attackCooldown;
 
-        // ✅ Save FROM node for matrix visualization arrow
         if (currentNode != null)
             PreviousVertexForDebug = currentNode.Position;
 
-        // Choose edge
         DecisionNode fromNode = currentNode;
         lastAction = currentNode.GetRandomEdge();
-
         LastChosenAttackNameForDebug = lastAction != null ? lastAction.ActionName : "none";
 
         if (lastAction == null)
@@ -195,12 +206,11 @@ public class FinalBossController : MonoBehaviour
         DecisionNode toNode = lastAction.TargetNode;
         currentNode = toNode;
 
-        Log($"DECISION: VERTEX {fromNode.Position} -> EDGE/ATTACK '{lastAction.ActionName}' (w={lastAction.Weight:0.00}) -> VERTEX {toNode.Position}");
+        Log($"DECISION: {fromNode.Position} -> '{lastAction.ActionName}' (w={lastAction.Weight:0.00}) -> {toNode.Position}");
 
         if (lastAction.ActionName == lastAttackName)
         {
             sameAttackAccumTime += attackCooldown;
-
             if (sameAttackAccumTime >= repeatWarnSeconds)
                 Log($"⚠ REPEAT: same attack '{lastAttackName}' for ~{sameAttackAccumTime:0.0}s");
         }
@@ -255,9 +265,24 @@ public class FinalBossController : MonoBehaviour
         }
     }
 
+    // ✅ IMPORTANT: external damage should go through EnemyHealth
     public void ReceiveDamage(int dmg)
     {
-        bossHealth -= dmg;
+        if (enemyHealth == null || enemyHealth.IsDead()) return;
+        enemyHealth.TakeDamage(dmg);
+    }
+
+    // EnemyHealth.SendMessage("OnHit") will call this if you want
+    private void OnHit()
+    {
+        // Optional: play hit reaction logic here (or just animator triggers in another script)
+    }
+
+    // EnemyHealth.SendMessage("OnDeath") will call this too,
+    // but Update() already handles death. Keeping it is harmless.
+    private void OnDeath()
+    {
+        HandleDeathOnce();
     }
 
     private void ApplyFeedback(bool hitSuccess)
@@ -269,7 +294,7 @@ public class FinalBossController : MonoBehaviour
 
         lastAction.AdjustWeight(delta);
 
-        Log($"RL: {lastAction.ActionName} {(hitSuccess ? "HIT ✅" : "MISS ❌")} | w {before:0.00} -> {lastAction.Weight:0.00} (delta {delta:+0.00;-0.00})");
+        Log($"RL: {lastAction.ActionName} {(hitSuccess ? "HIT ✅" : "MISS ❌")} | w {before:0.00} -> {lastAction.Weight:0.00}");
     }
 
     private void InitializeMatrix()
@@ -299,7 +324,6 @@ public class FinalBossController : MonoBehaviour
     {
         foreach (var e in node.Edges.Values)
             if (e.ActionName == actionName) return e.Weight;
-
         return 0f;
     }
 

@@ -2510,6 +2510,7 @@ GameObject:
   - component: {fileID: 8549995267675857105}
   - component: {fileID: 968442011006865218}
   - component: {fileID: 723460194622572325}
+  - component: {fileID: 2407933633333476731}
   m_Layer: 8
   m_Name: Kai Greenleaf
   m_TagString: Player
@@ -2637,6 +2638,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
+  spreadAngle: 10
 --- !u!136 &968442011006865218
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -2673,6 +2675,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 1000
+  deathDelay: 3
+  startMenuSceneName: Start Menu
+  deathPanel: {fileID: 0}
+  deathText: {fileID: 0}
+--- !u!114 &2407933633333476731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607807134322912681}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a61693c9bbf7aff43aeefc184da288fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5880608306012225730
 GameObject:
   m_ObjectHideFlags: 0
@@ -2951,6 +2969,7 @@ GameObject:
   - component: {fileID: 5516011491291370587}
   - component: {fileID: 8987882851620790850}
   - component: {fileID: 5184027764033146528}
+  - component: {fileID: 3638244934518019823}
   m_Layer: 8
   m_Name: FreeLook Camera
   m_TagString: Untagged
@@ -3183,6 +3202,36 @@ MonoBehaviour:
         DecelTime: 0
   PlayerIndex: -1
   AutoEnableInputs: 1
+--- !u!114 &3638244934518019823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6573514903134668347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e501d18bb52cf8c40b1853ca4904654f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_CollideAgainst:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IgnoreTag: 
+  m_TransparentLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_MinimumDistanceFromTarget: 0.1
+  m_AvoidObstacles: 1
+  m_DistanceLimit: 0
+  m_MinimumOcclusionTime: 0
+  m_CameraRadius: 0.1
+  m_Strategy: 1
+  m_MaximumEffort: 4
+  m_SmoothingTime: 0
+  m_Damping: 0
+  m_DampingWhenOccluded: 0
+  m_OptimalTargetDistance: 0
 --- !u!1 &6635907841493416820
 GameObject:
   m_ObjectHideFlags: 0
